@@ -1,43 +1,53 @@
 package lk.ijse.notecollectorspringboot.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import lk.ijse.notecollectorspringboot.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@RequiredArgsConstructor /* meka kale dependency inject walata meka nathuwa autowiered dannath puluwan. */
 public class SecurityConfig {
-    /* Value Injection */
-    @Value("${secure.username}")
-    private String username;
-    @Value("${secure.password}")
-    private String password;
-    @Value("${secure.role}")
-    private String role;
+    private final UserService userService;
+    private final JWTConfigFilter jwtConfigFilter;
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests()
-                .anyRequest().authenticated() /*  ena hama request ekakma authenticate da */
-                .and()
-                .httpBasic();
+                /* ena okkoma request authorize karanna */
+                .authorizeHttpRequests(req->
+                        req.requestMatchers("api/v1/auth/**")
+                                .permitAll()
+                                .anyRequest()
+                                .authenticated())
+                        /* 'api/v1/auth/**' me url pattern eka thiyanawa nm permission denna. anith request authenticate karanna */
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtConfigFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-
-    /* Apita one widiyata username password change karanawa */
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(); /* meya password eka encode karala denawa */
+    }
     @Bean
-    public InMemoryUserDetailsManager inMemoryUserDetailsManager() {
-        UserDetails principleUser = User.withDefaultPasswordEncoder()
-                .username(username)
-                .password(password)
-                .roles(role)
-                .build();
-        return new InMemoryUserDetailsManager(principleUser);
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider dap = new DaoAuthenticationProvider();
+        dap.setUserDetailsService(userService.userDetailsService());
+        dap.setPasswordEncoder(passwordEncoder());
+        return dap;
+    }
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }

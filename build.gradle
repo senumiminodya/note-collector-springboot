@@ -35,7 +35,11 @@ dependencies {
     implementation group: 'org.modelmapper', name: 'modelmapper', version: '3.2.1'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version:'3.3.4'
-
+    // https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api
+    implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.12.6'
+    runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.12.6'
+    runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.12.6'
+    implementation 'org.apache.commons:commons-lang3:3.12.0' //meka thiyenne token eka extract karaganna
 
 }
 
