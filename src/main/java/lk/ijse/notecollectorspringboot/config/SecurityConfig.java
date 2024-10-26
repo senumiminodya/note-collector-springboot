@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtConfigFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
+    @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(); /* meya password eka encode karala denawa */
     }

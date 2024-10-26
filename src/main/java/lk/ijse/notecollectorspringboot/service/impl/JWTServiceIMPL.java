@@ -47,7 +47,7 @@ public class JWTServiceIMPL implements JWTService {
     }
 
     private Claims getClaims(String token) {
-        return Jwts.parser().setSigningKey(getSignKey()).build().parseClaimsJwt(token)
+        return Jwts.parser().setSigningKey(getSignKey()).build().parseClaimsJws(token)
                 .getBody();
     }
     private Key getSignKey() {
@@ -57,7 +57,7 @@ public class JWTServiceIMPL implements JWTService {
     private String genToken(Map<String, Object> genClaims, UserDetails userDetails) {
         genClaims.put("role",userDetails.getAuthorities());
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + 1000 * 600);
+        Date expiration = new Date(now.getTime() + 1000 * 600 * 600);
         return Jwts.builder().setClaims(genClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(now)
